@@ -110,7 +110,18 @@ export default function ScanWizard({ assets, activeScan, onScanStarted }: ScanWi
       return;
     }
 
-    setLogs(['Initiating security connection bridge...']);
+    setLogs([
+      "         ,           ,",
+      "        /             \\",
+      "       ((__-^^-,-^^-__))",
+      "        `-_---' `---_-'",
+      "         <__`--------'>",
+      "          ) `--------' (",
+      "          /            \\",
+      "",
+      "[*] Dragon Security Assessment Engine Init...",
+      "[*] Target Scope Initialized."
+    ]);
     setProgress(5);
     setScanStatus('running');
 
@@ -322,10 +333,18 @@ export default function ScanWizard({ assets, activeScan, onScanStarted }: ScanWi
                   );
                 })
               ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center text-gray-600 text-xs py-20 font-sans">
-                  <Terminal className="w-12 h-12 mb-3 opacity-30 text-cyber-cyan" />
-                  <span>Dragon Security Terminal Idle</span>
-                  <span>Select an asset and click "Execute Assessment" to begin auditing.</span>
+                <div className="w-full h-full flex flex-col items-center justify-center py-6 text-gray-500 font-sans select-none">
+                  <pre className="font-mono text-cyber-cyan/50 text-[10px] leading-tight mb-4 text-center">
+{`         ,           ,
+        /             \\
+       ((__-^^-,-^^-__))
+        \`-_---' \`---_-'
+         <__\`--------'>
+          ) \`--------' (
+          /            \\`}
+                  </pre>
+                  <span className="text-xs font-semibold text-gray-400 block tracking-wider">DRAGON SECURITY TERMINAL IDLE</span>
+                  <span className="text-[10px] text-gray-600 mt-1">Select an asset and execute an assessment to stream real-time logs.</span>
                 </div>
               )}
               <div ref={consoleEndRef} />
