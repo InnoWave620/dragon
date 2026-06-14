@@ -26,6 +26,16 @@ interface Scan {
   };
   startedAt: string;
   completedAt?: string;
+  compliance?: {
+    owaspScore: number;
+    cisScore: number;
+    details: {
+      category: string;
+      status: 'pass' | 'fail';
+      control: string;
+      description: string;
+    }[];
+  };
 }
 
 interface ReportCenterProps {
@@ -37,6 +47,7 @@ type FormatType = 'pdf' | 'html' | 'json' | 'csv';
 export default function ReportCenter({ scans }: ReportCenterProps) {
   const [selectedScanId, setSelectedScanId] = useState('');
   const [exportFormat, setExportFormat] = useState<FormatType>('pdf');
+  const [reportType, setReportType] = useState<'audit' | 'compliance'>('audit');
   const [isExporting, setIsExporting] = useState(false);
   const [exportMessage, setExportMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
@@ -78,7 +89,7 @@ export default function ReportCenter({ scans }: ReportCenterProps) {
       }
 
       // 2. Call main process to generate and write the report to disk
-      const success = await window.electronAPI.reports.exportReport(scan.id, exportFormat, savePath);
+      const success = await window.electronAPI.reports.exportReport(scan.id, exportFormat, savePath, reportType);
       
       if (success) {
         setExportMessage({
@@ -159,6 +170,37 @@ export default function ReportCenter({ scans }: ReportCenterProps) {
               </select>
             </div>
 
+            {/* Report Type choice */}
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 font-semibold uppercase">Report Type</label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setReportType('audit')}
+                  disabled={isExporting}
+                  className={`flex items-center justify-center p-2 rounded-lg border text-[11px] font-semibold transition-all ${
+                    reportType === 'audit'
+                      ? 'bg-cyber-cyan/15 border-cyber-cyan text-cyber-cyan'
+                      : 'bg-dark-surface border-dark-border text-gray-400 hover:bg-gray-800 hover:text-white'
+                  }`}
+                >
+                  Vuln Audit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReportType('compliance')}
+                  disabled={isExporting}
+                  className={`flex items-center justify-center p-2 rounded-lg border text-[11px] font-semibold transition-all ${
+                    reportType === 'compliance'
+                      ? 'bg-cyber-purple/15 border-cyber-purple text-cyber-purple'
+                      : 'bg-dark-surface border-dark-border text-gray-400 hover:bg-gray-800 hover:text-white'
+                  }`}
+                >
+                  Compliance
+                </button>
+              </div>
+            </div>
+
             {/* Format choice grid */}
             <div className="space-y-2">
               <label className="text-xs text-gray-500 font-semibold uppercase">Export Format</label>
@@ -224,6 +266,7 @@ export default function ReportCenter({ scans }: ReportCenterProps) {
                     <th className="p-3">Asset</th>
                     <th className="p-3">Completed On</th>
                     <th className="p-3">Severity Findings</th>
+                    <th className="p-3 text-center">Compliance</th>
                     <th className="p-3 text-center">Quick Export</th>
                   </tr>
                 </thead>
@@ -247,6 +290,16 @@ export default function ReportCenter({ scans }: ReportCenterProps) {
                             <span className="text-cyber-emerald font-semibold uppercase text-[9px] tracking-wider">Clean</span>
                           )}
                         </div>
+                      </td>
+                      <td className="p-3 text-center">
+                        {scan.compliance ? (
+                          <div className="space-y-0.5 font-bold">
+                            <span className="text-cyber-cyan block">OWASP: {scan.compliance.owaspScore}%</span>
+                            <span className="text-cyber-purple block">CIS: {scan.compliance.cisScore}%</span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-600 font-medium">N/A</span>
+                        )}
                       </td>
                       <td className="p-3">
                         <div className="flex items-center justify-center space-x-1">

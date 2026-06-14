@@ -34,8 +34,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Reporting API
   reports: {
-    exportReport: (scanId: string, format: 'pdf' | 'html' | 'json' | 'csv', defaultPath: string) => 
-      ipcRenderer.invoke('report:export', scanId, format, defaultPath),
+    exportReport: (scanId: string, format: 'pdf' | 'html' | 'json' | 'csv', defaultPath: string, reportType?: 'audit' | 'compliance') => 
+      ipcRenderer.invoke('report:export', scanId, format, defaultPath, reportType),
     selectSavePath: (title: string, defaultName: string, filters: any[]) => 
       ipcRenderer.invoke('dialog:save-path', title, defaultName, filters)
   },

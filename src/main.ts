@@ -141,18 +141,18 @@ function setupIpcHandlers() {
   });
 
   // Report Export Handler
-  ipcMain.handle('report:export', async (_event, scanId, format, filePath) => {
+  ipcMain.handle('report:export', async (_event, scanId, format, filePath, reportType) => {
     const scan = dbService.getScan(scanId);
     if (!scan) return false;
     
     if (format === 'html') {
-      return reportService.exportHtml(scan, filePath);
+      return reportService.exportHtml(scan, filePath, reportType);
     } else if (format === 'json') {
       return reportService.exportJson(scan, filePath);
     } else if (format === 'csv') {
       return reportService.exportCsv(scan, filePath);
     } else if (format === 'pdf') {
-      return await reportService.exportPdf(scan, filePath);
+      return await reportService.exportPdf(scan, filePath, reportType);
     }
     
     return false;

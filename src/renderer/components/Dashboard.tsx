@@ -139,6 +139,86 @@ export default function Dashboard({ assets, scans, findings, riskIndex, onNaviga
         ))}
       </div>
 
+      {/* COMPLIANCE SCORE INDEX */}
+      {(() => {
+        const scansWithCompliance = scans.filter(s => s.status === 'completed' && s.compliance);
+        let owaspScore = 100;
+        let cisScore = 100;
+        if (scansWithCompliance.length > 0) {
+          const latestComplianceScan = [...scansWithCompliance].sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())[0];
+          if (latestComplianceScan.compliance) {
+            owaspScore = latestComplianceScan.compliance.owaspScore;
+            cisScore = latestComplianceScan.compliance.cisScore;
+          }
+        }
+
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* OWASP ASVS Card */}
+            <div className="glass-card p-6 flex items-center justify-between border border-dark-border/40 relative overflow-hidden">
+              <div className="space-y-3 flex-1">
+                <span className="text-xs text-gray-400 font-bold uppercase tracking-wider block">OWASP ASVS Compliance Rating</span>
+                <div className="flex items-baseline space-x-2">
+                  <h4 className="text-3xl font-black text-white">{owaspScore}%</h4>
+                  <span className="text-xs text-cyber-cyan font-semibold">Verification Level 1 & 2 Checklist</span>
+                </div>
+                <p className="text-xs text-gray-500 max-w-sm">
+                  Checks cover cryptography, session tokens, access control rules, and unauthenticated API endpoints.
+                </p>
+              </div>
+              <div className="relative w-20 h-20 flex items-center justify-center flex-shrink-0">
+                <svg className="w-full h-full -rotate-90">
+                  <circle cx="40" cy="40" r="34" className="stroke-dark-border" strokeWidth="6" fill="none" />
+                  <circle 
+                    cx="40" 
+                    cy="40" 
+                    r="34" 
+                    className="stroke-cyber-cyan transition-all duration-1000" 
+                    strokeWidth="6" 
+                    fill="none"
+                    strokeDasharray={`${2 * Math.PI * 34}`}
+                    strokeDashoffset={`${2 * Math.PI * 34 * (1 - owaspScore / 100)}`}
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <span className="absolute text-xs font-black text-cyber-cyan">{owaspScore}%</span>
+              </div>
+            </div>
+
+            {/* CIS Benchmarks Card */}
+            <div className="glass-card p-6 flex items-center justify-between border border-dark-border/40 relative overflow-hidden">
+              <div className="space-y-3 flex-1">
+                <span className="text-xs text-gray-400 font-bold uppercase tracking-wider block">CIS Container Benchmarks</span>
+                <div className="flex items-baseline space-x-2">
+                  <h4 className="text-3xl font-black text-white">{cisScore}%</h4>
+                  <span className="text-xs text-cyber-purple font-semibold">Docker Image & Runtime Audit</span>
+                </div>
+                <p className="text-xs text-gray-500 max-w-sm">
+                  Checks container execution privileges, exposed DB ports, hardcoded env secrets, and base image pinning.
+                </p>
+              </div>
+              <div className="relative w-20 h-20 flex items-center justify-center flex-shrink-0">
+                <svg className="w-full h-full -rotate-90">
+                  <circle cx="40" cy="40" r="34" className="stroke-dark-border" strokeWidth="6" fill="none" />
+                  <circle 
+                    cx="40" 
+                    cy="40" 
+                    r="34" 
+                    className="stroke-cyber-purple transition-all duration-1000" 
+                    strokeWidth="6" 
+                    fill="none"
+                    strokeDasharray={`${2 * Math.PI * 34}`}
+                    strokeDashoffset={`${2 * Math.PI * 34 * (1 - cisScore / 100)}`}
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <span className="absolute text-xs font-black text-cyber-purple">{cisScore}%</span>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* CHARTS & ANALYTICS AREA */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         

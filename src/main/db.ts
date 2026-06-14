@@ -30,6 +30,16 @@ export interface Scan {
   startedAt: string;
   completedAt?: string;
   logs: string[];
+  compliance?: {
+    owaspScore: number;
+    cisScore: number;
+    details: {
+      category: string;
+      status: 'pass' | 'fail';
+      control: string;
+      description: string;
+    }[];
+  };
 }
 
 export interface Finding {

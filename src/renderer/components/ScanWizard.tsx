@@ -29,6 +29,9 @@ export default function ScanWizard({ assets, activeScan, onScanStarted }: ScanWi
   const [useCrawler, setUseCrawler] = useState(true);
   const [useSecrets, setUseSecrets] = useState(false);
   const [useDependencies, setUseDependencies] = useState(false);
+  const [useSast, setUseSast] = useState(false);
+  const [useApi, setUseApi] = useState(false);
+  const [useDocker, setUseDocker] = useState(false);
   
   const [logs, setLogs] = useState<string[]>([]);
   const [progress, setProgress] = useState(0);
@@ -45,10 +48,30 @@ export default function ScanWizard({ assets, activeScan, onScanStarted }: ScanWi
         setUseCrawler(false);
         setUseSecrets(true);
         setUseDependencies(true);
+        setUseSast(true);
+        setUseDocker(true);
+        setUseApi(true);
+      } else if (asset.type === 'api') {
+        setUseCrawler(false);
+        setUseSecrets(false);
+        setUseDependencies(false);
+        setUseSast(false);
+        setUseDocker(false);
+        setUseApi(true);
+      } else if (asset.type === 'docker') {
+        setUseCrawler(false);
+        setUseSecrets(false);
+        setUseDependencies(false);
+        setUseSast(false);
+        setUseDocker(true);
+        setUseApi(false);
       } else {
         setUseCrawler(true);
         setUseSecrets(false);
         setUseDependencies(false);
+        setUseSast(false);
+        setUseDocker(false);
+        setUseApi(false);
       }
     }
   }, [selectedAssetId, assets]);
@@ -104,6 +127,9 @@ export default function ScanWizard({ assets, activeScan, onScanStarted }: ScanWi
     if (useCrawler) modules.push('website_security');
     if (useSecrets) modules.push('secret_detection');
     if (useDependencies) modules.push('dependency_scanning');
+    if (useSast) modules.push('source_code_sast');
+    if (useApi) modules.push('api_security');
+    if (useDocker) modules.push('docker_security');
 
     if (modules.length === 0) {
       alert('Please select at least one scan module to execute.');
@@ -257,6 +283,63 @@ export default function ScanWizard({ assets, activeScan, onScanStarted }: ScanWi
                   </span>
                   <span className="text-[10px] text-gray-500 block">
                     Inspect package.json or requirements.txt for outdated, vulnerable library modules.
+                  </span>
+                </div>
+              </label>
+
+              {/* Source Code SAST Module */}
+              <label className="flex items-start space-x-3 cursor-pointer group">
+                <input 
+                  type="checkbox" 
+                  checked={useSast}
+                  onChange={(e) => setUseSast(e.target.checked)}
+                  disabled={scanStatus === 'running' || (selectedAsset && selectedAsset.type !== 'folder')}
+                  className="mt-1 rounded bg-dark-surface border-dark-border text-cyber-cyan focus:ring-0 w-4 h-4"
+                />
+                <div>
+                  <span className="text-xs font-semibold text-gray-200 group-hover:text-white block">
+                    Source Code SAST Auditor
+                  </span>
+                  <span className="text-[10px] text-gray-500 block">
+                    Regex-based SAST scanning for SQL Injection, Command Injection, and dangerous functions.
+                  </span>
+                </div>
+              </label>
+
+              {/* API Security Audit Module */}
+              <label className="flex items-start space-x-3 cursor-pointer group">
+                <input 
+                  type="checkbox" 
+                  checked={useApi}
+                  onChange={(e) => setUseApi(e.target.checked)}
+                  disabled={scanStatus === 'running' || (selectedAsset && (selectedAsset.type !== 'folder' && selectedAsset.type !== 'api' && selectedAsset.type !== 'localhost' && selectedAsset.type !== 'website'))}
+                  className="mt-1 rounded bg-dark-surface border-dark-border text-cyber-cyan focus:ring-0 w-4 h-4"
+                />
+                <div>
+                  <span className="text-xs font-semibold text-gray-200 group-hover:text-white block">
+                    API Security Auditor
+                  </span>
+                  <span className="text-[10px] text-gray-500 block">
+                    Parse OpenAPI/Swagger specs to audit unauthenticated routes and parameter constraints.
+                  </span>
+                </div>
+              </label>
+
+              {/* Docker Security Audit Module */}
+              <label className="flex items-start space-x-3 cursor-pointer group">
+                <input 
+                  type="checkbox" 
+                  checked={useDocker}
+                  onChange={(e) => setUseDocker(e.target.checked)}
+                  disabled={scanStatus === 'running' || (selectedAsset && (selectedAsset.type !== 'folder' && selectedAsset.type !== 'docker'))}
+                  className="mt-1 rounded bg-dark-surface border-dark-border text-cyber-cyan focus:ring-0 w-4 h-4"
+                />
+                <div>
+                  <span className="text-xs font-semibold text-gray-200 group-hover:text-white block">
+                    Container Security Auditor
+                  </span>
+                  <span className="text-[10px] text-gray-500 block">
+                    Audit Dockerfile and docker-compose settings for root users, port mappings, and secrets.
                   </span>
                 </div>
               </label>

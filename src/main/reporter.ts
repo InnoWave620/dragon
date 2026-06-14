@@ -6,7 +6,7 @@ import { dbService, Finding, Scan } from './db';
 export class ReportService {
   
   // HTML template generator
-  generateHtmlReport(scan: Scan, findings: Finding[]): string {
+  generateHtmlReport(scan: Scan, findings: Finding[], reportType: 'audit' | 'compliance' = 'audit'): string {
     const severityColors = {
       critical: '#f43f5e',
       high: '#8b5cf6',
@@ -327,12 +327,84 @@ export class ReportService {
           </div>
         </div>
 
-        <h2>Detailed Vulnerability Analysis</h2>
-        ${totalFindings === 0 ? `
-          <div class="card" style="text-align: center; padding: 40px;">
-            <p style="font-size: 16px; margin: 0; color: #10b981;">[+] No vulnerabilities were detected during this security scan.</p>
-          </div>
-        ` : findingsHtml}
+        ${(() => {
+          let complianceSectionHtml = '';
+          if (scan.compliance) {
+            const detailsRows = scan.compliance.details.map(d => `
+              <tr style="border-bottom: 1px solid #1f2430; font-size: 12px;">
+                <td style="padding: 10px; font-weight: bold; color: #e2e8f0;">${d.category}</td>
+                <td style="padding: 10px; font-family: monospace; color: #94a3b8;">${d.control}</td>
+                <td style="padding: 10px; color: #94a3b8;">${d.description}</td>
+                <td style="padding: 10px; text-align: center;">
+                  <span class="badge" style="background-color: ${d.status === 'pass' ? '#10b981' : '#f43f5e'}; color: white; display: inline-block; margin: 0; min-width: 60px; text-align: center;">
+                    ${d.status.toUpperCase()}
+                  </span>
+                </td>
+              </tr>
+            `).join('');
+
+            complianceSectionHtml = `
+              <div class="card" style="margin-top: 30px; margin-bottom: 40px; page-break-inside: avoid;">
+                <h3 style="color: #00f0ff; margin-top: 0;">Compliance Evaluation Matrices</h3>
+                <div style="display: flex; gap: 40px; margin-bottom: 25px; align-items: center; justify-content: space-around;">
+                  <div style="text-align: center;">
+                    <span style="font-size: 12px; text-transform: uppercase; color: #94a3b8; display: block; margin-bottom: 5px;">OWASP ASVS Score</span>
+                    <div style="font-size: 36px; font-weight: 900; color: #00f0ff;">${scan.compliance.owaspScore}%</div>
+                  </div>
+                  <div style="text-align: center;">
+                    <span style="font-size: 12px; text-transform: uppercase; color: #94a3b8; display: block; margin-bottom: 5px;">CIS Container Score</span>
+                    <div style="font-size: 36px; font-weight: 900; color: #8b5cf6;">${scan.compliance.cisScore}%</div>
+                  </div>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; text-align: left; margin-top: 15px;">
+                  <thead>
+                    <tr style="background-color: #1b1f2e; border-bottom: 2px solid #1f2430; color: #94a3b8; font-size: 10px; text-transform: uppercase;">
+                      <th style="padding: 10px;">Category</th>
+                      <th style="padding: 10px;">Control</th>
+                      <th style="padding: 10px;">Requirement Description</th>
+                      <th style="padding: 10px; text-align: center; width: 80px;">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${detailsRows}
+                  </tbody>
+                </table>
+              </div>
+            `;
+          }
+
+          if (reportType === 'compliance') {
+            return `
+              <h2>Compliance Assessment Summary</h2>
+              ${complianceSectionHtml || `
+                <div class="card" style="text-align: center; padding: 40px;">
+                  <p style="font-size: 14px; margin: 0; color: #94a3b8;">No compliance metrics recorded for this scan.</p>
+                </div>
+              `}
+              
+              <h2 style="margin-top: 40px;">Supporting Security Findings</h2>
+              ${totalFindings === 0 ? `
+                <div class="card" style="text-align: center; padding: 40px;">
+                  <p style="font-size: 16px; margin: 0; color: #10b981;">[+] No supporting vulnerabilities were detected during this security scan.</p>
+                </div>
+              ` : findingsHtml}
+            `;
+          } else {
+            return `
+              <h2>Detailed Vulnerability Analysis</h2>
+              ${totalFindings === 0 ? `
+                <div class="card" style="text-align: center; padding: 40px;">
+                  <p style="font-size: 16px; margin: 0; color: #10b981;">[+] No vulnerabilities were detected during this security scan.</p>
+                </div>
+              ` : findingsHtml}
+              
+              ${scan.compliance ? `
+                <h2 style="margin-top: 40px;">Compliance Evaluation Matrices</h2>
+                ${complianceSectionHtml}
+              ` : ''}
+            `;
+          }
+        })()}
       </div>
     </body>
     </html>
@@ -340,10 +412,10 @@ export class ReportService {
   }
 
   // Exports report to HTML file
-  exportHtml(scan: Scan, filePath: string): boolean {
+  exportHtml(scan: Scan, filePath: string, reportType?: 'audit' | 'compliance'): boolean {
     try {
       const findings = dbService.getFindings().filter(f => f.scanId === scan.id);
-      const html = this.generateHtmlReport(scan, findings);
+      const html = this.generateHtmlReport(scan, findings, reportType);
       fs.writeFileSync(filePath, html, 'utf-8');
       return true;
     } catch (e) {
@@ -410,11 +482,11 @@ export class ReportService {
   }
 
   // Electron printToPDF runner
-  async exportPdf(scan: Scan, filePath: string): Promise<boolean> {
+  async exportPdf(scan: Scan, filePath: string, reportType?: 'audit' | 'compliance'): Promise<boolean> {
     return new Promise(async (resolve) => {
       try {
         const findings = dbService.getFindings().filter(f => f.scanId === scan.id);
-        const html = this.generateHtmlReport(scan, findings);
+        const html = this.generateHtmlReport(scan, findings, reportType);
         
         // Write HTML to a temporary file
         const tmpHtmlPath = path.join(app.getPath('temp'), `dragon_pdf_report_${scan.id}.html`);

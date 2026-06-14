@@ -40,7 +40,7 @@ declare global {
         onComplete: (callback: (scan: any) => void) => () => void;
       };
       reports: {
-        exportReport: (scanId: string, format: string, filePath: string) => Promise<boolean>;
+        exportReport: (scanId: string, format: string, filePath: string, reportType?: 'audit' | 'compliance') => Promise<boolean>;
         selectSavePath: (title: string, defaultName: string, filters: any[]) => Promise<string | null>;
       };
       ai: {
