@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-dark-bg text-gray-200 font-sans antialiased overflow-x-hidden selection:bg-cyber-cyan/30 selection:text-white;
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(0, 240, 255, 0.03) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.03) 0px, transparent 50%);
+  }
+
+  /* Custom Scrollbars */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-dark-bg;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-dark-border rounded-full hover:bg-gray-700 transition-colors;
+  }
+
+  /* Custom Focus Ring */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-cyber-cyan/50 ring-offset-2 ring-offset-dark-bg;
+  }
+}
+
+@layer components {
+  /* Glass Card */
+  .glass-card {
+    @apply bg-dark-card/80 border border-dark-border/80 rounded-xl backdrop-blur-md shadow-lg;
+  }
+
+  .glass-card-hover {
+    @apply transition-all duration-300 hover:border-gray-700/50 hover:bg-dark-card/90;
+  }
+
+  /* Cyber Glowing Buttons */
+  .btn-cyber-cyan {
+    @apply bg-cyber-cyan/10 hover:bg-cyber-cyan/20 border border-cyber-cyan/30 hover:border-cyber-cyan text-cyber-cyan font-medium px-4 py-2 rounded-lg transition-all duration-200 hover:shadow-glow-cyan;
+  }
+
+  .btn-cyber-rose {
+    @apply bg-cyber-rose/10 hover:bg-cyber-rose/20 border border-cyber-rose/30 hover:border-cyber-rose text-cyber-rose font-medium px-4 py-2 rounded-lg transition-all duration-200 hover:shadow-glow-rose;
+  }
+
+  .btn-cyber-emerald {
+    @apply bg-cyber-emerald/10 hover:bg-cyber-emerald/20 border border-cyber-emerald/30 hover:border-cyber-emerald text-cyber-emerald font-medium px-4 py-2 rounded-lg transition-all duration-200 hover:shadow-glow-emerald;
+  }
+  
+  .btn-cyber-gray {
+    @apply bg-gray-800/50 hover:bg-gray-800 border border-dark-border text-gray-300 font-medium px-4 py-2 rounded-lg transition-all duration-200;
+  }
+
+  /* Cyber Input Fields */
+  .input-cyber {
+    @apply bg-dark-surface border border-dark-border text-gray-200 rounded-lg px-3 py-2 w-full focus:border-cyber-cyan/70 focus:ring-1 focus:ring-cyber-cyan/30 transition-all duration-200 outline-none;
+  }
+
+  /* Badges */
+  .badge-critical {
+    @apply bg-cyber-rose/10 border border-cyber-rose/30 text-cyber-rose px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wider shadow-glow-rose;
+  }
+  
+  .badge-high {
+    @apply bg-cyber-purple/10 border border-cyber-purple/30 text-cyber-purple px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wider;
+  }
+
+  .badge-medium {
+    @apply bg-cyber-amber/10 border border-cyber-amber/30 text-cyber-amber px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wider;
+  }
+
+  .badge-low {
+    @apply bg-cyber-blue/10 border border-cyber-blue/30 text-cyber-blue px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wider;
+  }
+
+  .badge-info {
+    @apply bg-gray-700/30 border border-gray-600/30 text-gray-400 px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wider;
+  }
+}
