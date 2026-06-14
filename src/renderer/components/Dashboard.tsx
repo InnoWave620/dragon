@@ -268,7 +268,7 @@ export default function Dashboard({ assets, scans, findings, riskIndex, onNaviga
                     <span className="text-[10px] text-gray-500 font-semibold uppercase">{scan.modules.join(', ')}</span>
                   </div>
                   <div className="flex items-center space-x-4">
-                    <span className="text-gray-400">{new Date(scan.startedAt).toLocaleDateString()}</span>
+                    <span className="text-gray-400">{new Date(scan.startedAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
                     <span className={`px-2 py-0.5 rounded font-bold uppercase ${
                       scan.status === 'completed' 
                         ? 'bg-cyber-emerald/10 text-cyber-emerald' 

@@ -153,7 +153,7 @@ export default function ReportCenter({ scans }: ReportCenterProps) {
                 <option value="">-- Choose Scan Record --</option>
                 {completedScans.map(s => (
                   <option key={s.id} value={s.id}>
-                    {s.assetName} - {new Date(s.startedAt).toLocaleDateString()}
+                    {s.assetName} - {new Date(s.startedAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                   </option>
                 ))}
               </select>
