@@ -82,8 +82,10 @@ export default function ScanWizard({ assets, activeScan, onScanStarted }: ScanWi
     if (activeScan) {
       setScanStatus(activeScan.status);
       setProgress(activeScan.progress);
-      setRunningScanId(activeScan.id);
-      setLogs(activeScan.logs || []);
+      if (activeScan.id !== runningScanId) {
+        setRunningScanId(activeScan.id);
+        setLogs(activeScan.logs || []);
+      }
     } else if (scanStatus === 'running') {
       setScanStatus('completed');
       setProgress(100);
@@ -445,12 +447,15 @@ export default function ScanWizard({ assets, activeScan, onScanStarted }: ScanWi
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center py-6 text-gray-500 font-sans select-none">
                   <pre className="font-mono text-cyber-cyan/50 text-[10px] leading-tight mb-4 text-center">
-{`    ____                                 
-   / __ \\_________ _____ _____  ____     
-  / / / / ___/ __ \`/ __ \`/ __ \\/ __ \\    
- / /_/ / /  / /_/ / /_/ / /_/ / / / /    
-/_____/_/   \\__,_/\\__, /\\____/_/ /_/     
-                 /____/                  `}
+{`       ,      ,
+      /(      )\\
+  |\\  \\\\__  __//  /|
+  | \\((_  \\/  _))/ |
+  |  \`-_\\_/\\_/-'  |
+   \\  ((  oo  ))  /
+    \\  \\\\_=-_//  /
+     \\  \`-___-' /
+      \`--____--'`}
                   </pre>
                   <span className="text-xs font-semibold text-gray-400 block tracking-wider">DRAGON SECURITY TERMINAL IDLE</span>
                   <span className="text-[10px] text-gray-600 mt-1">Select an asset and execute an assessment to stream real-time logs.</span>
