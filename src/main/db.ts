@@ -210,6 +210,16 @@ class DatabaseService {
     return false;
   }
 
+  deleteFindings(ids: string[]): boolean {
+    const initialLength = this.data.findings.length;
+    this.data.findings = this.data.findings.filter(f => !ids.includes(f.id));
+    if (this.data.findings.length !== initialLength) {
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
   clearFindings() {
     this.data.findings = [];
     this.save();

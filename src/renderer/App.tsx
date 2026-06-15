@@ -32,6 +32,7 @@ declare global {
         getFindings: () => Promise<any[]>;
         updateFinding: (finding: any) => Promise<any>;
         deleteFinding: (id: string) => Promise<boolean>;
+        deleteFindings: (ids: string[]) => Promise<boolean>;
         clearFindings: () => Promise<void>;
       };
       scan: {

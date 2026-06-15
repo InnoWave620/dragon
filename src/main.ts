@@ -96,6 +96,10 @@ function setupIpcHandlers() {
     return dbService.deleteFinding(id);
   });
 
+  ipcMain.handle('db:delete-findings', (_event, ids) => {
+    return dbService.deleteFindings(ids);
+  });
+
   ipcMain.handle('db:clear-findings', () => {
     return dbService.clearFindings();
   });

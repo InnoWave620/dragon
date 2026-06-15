@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getFindings: () => ipcRenderer.invoke('db:get-findings'),
     updateFinding: (finding: any) => ipcRenderer.invoke('db:update-finding', finding),
     deleteFinding: (id: string) => ipcRenderer.invoke('db:delete-finding', id),
+    deleteFindings: (ids: string[]) => ipcRenderer.invoke('db:delete-findings', ids),
     clearFindings: () => ipcRenderer.invoke('db:clear-findings'),
   },
   
