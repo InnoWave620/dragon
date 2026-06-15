@@ -166,6 +166,7 @@ export class ScannerEngine {
     onLog: (logLine: string) => void;
     onComplete: (scan: Scan) => void;
     isCancelled: boolean;
+    activeRequest?: http.ClientRequest;
   }> = new Map();
 
   startScan(
@@ -188,12 +189,20 @@ export class ScannerEngine {
     scan.logs = [`Scan started on ${asset.name} (${asset.target})`];
     dbService.updateScan(scan);
 
-    const scanState = {
+    const scanState: {
+      scan: Scan;
+      onProgress: (scan: Scan) => void;
+      onLog: (logLine: string) => void;
+      onComplete: (scan: Scan) => void;
+      isCancelled: boolean;
+      activeRequest?: http.ClientRequest;
+    } = {
       scan,
       onProgress,
       onLog,
       onComplete,
-      isCancelled: false
+      isCancelled: false,
+      activeRequest: undefined
     };
     this.activeScans.set(scanId, scanState);
 
@@ -287,6 +296,12 @@ export class ScannerEngine {
       active.scan.logs.push(`[-] Scan cancel requested.`);
       active.onLog(`[-] Scan cancel requested.`);
       dbService.updateScan(active.scan);
+      if (active.activeRequest) {
+        active.onLog(`[-] Aborting active HTTP connection...`);
+        try {
+          active.activeRequest.destroy();
+        } catch (e) {}
+      }
     }
   }
 
@@ -321,6 +336,10 @@ export class ScannerEngine {
         const finish = () => {
           if (resolved) return;
           resolved = true;
+          if (scanState.isCancelled) {
+            resolve();
+            return;
+          }
           this.auditHeadersAndCookies(scan.id, scan.assetId, headers, htmlBuffer, onLog);
           resolve();
         };
@@ -343,9 +362,23 @@ export class ScannerEngine {
         });
       });
 
+      scanState.activeRequest = req;
+
+      const originalResolve = resolve;
+      resolve = () => {
+        if (scanState.activeRequest === req) {
+          scanState.activeRequest = undefined;
+        }
+        originalResolve();
+      };
+
       req.on('error', (err) => {
         if (responseStarted || resolved) return;
         resolved = true;
+        if (scanState.isCancelled) {
+          resolve();
+          return;
+        }
         onLog(`[!] Connection Warning: ${err.message}. Simulating local audit logic...`);
         // Fallback: create mock findings to ensure functionality for localhost/disconnected testing
         this.simulateLocalHeaderAudit(scan.id, scan.assetId, targetUrl, onLog);
@@ -356,6 +389,10 @@ export class ScannerEngine {
         if (responseStarted || resolved) return;
         resolved = true;
         req.destroy();
+        if (scanState.isCancelled) {
+          resolve();
+          return;
+        }
         onLog(`[!] Request timed out. Running local simulated audit...`);
         this.simulateLocalHeaderAudit(scan.id, scan.assetId, targetUrl, onLog);
         resolve();
@@ -1004,6 +1041,10 @@ export class ScannerEngine {
           const finish = () => {
             if (resolved) return;
             resolved = true;
+            if (scanState.isCancelled) {
+              resolve();
+              return;
+            }
             if (res.statusCode === 200 && (buffer.includes('"openapi"') || buffer.includes('"swagger"'))) {
               onLog(`[+] API Audit: Successfully discovered remote OpenAPI spec.`);
               specsFound.push({
@@ -1031,6 +1072,16 @@ export class ScannerEngine {
             finish();
           });
         });
+
+        scanState.activeRequest = req;
+
+        const originalResolve = resolve;
+        resolve = () => {
+          if (scanState.activeRequest === req) {
+            scanState.activeRequest = undefined;
+          }
+          originalResolve();
+        };
 
         req.on('error', () => {
           if (responseStarted || resolved) return;
