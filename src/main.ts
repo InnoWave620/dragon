@@ -18,6 +18,10 @@ if (started) {
 let mainWindow: BrowserWindow | null = null;
 
 const createWindow = () => {
+  const iconPath = app.isPackaged
+    ? path.join(process.resourcesPath, 'dragon-logo.png')
+    : path.join(__dirname, '../../dragon-logo.png');
+
   // Create the browser window.
   mainWindow = new BrowserWindow({
     width: 1280,
@@ -25,7 +29,7 @@ const createWindow = () => {
     minWidth: 1024,
     minHeight: 720,
     title: 'Dragon Security Assessment Platform',
-    icon: path.join(__dirname, '../../dragon-logo.png'),
+    icon: iconPath,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
