@@ -305,30 +305,47 @@ export class ScannerEngine {
     // Perform mock or actual HTTP request to audit headers
     return new Promise<void>((resolve) => {
       const client = parsed.protocol === 'https:' ? https : http;
+      let responseStarted = false;
+      let resolved = false;
       
       const req = client.get(parsed.href, {
         headers: { 'User-Agent': 'Mozilla/5.0 (Dragon Security Auditing)' },
         timeout: 5000
       }, (res) => {
+        responseStarted = true;
         const headers = res.headers;
         onLog(`[+] HTTP Response status: ${res.statusCode} ${res.statusMessage}`);
         
         let htmlBuffer = '';
+        
+        const finish = () => {
+          if (resolved) return;
+          resolved = true;
+          this.auditHeadersAndCookies(scan.id, scan.assetId, headers, htmlBuffer, onLog);
+          resolve();
+        };
+
         res.on('data', (chunk) => {
           htmlBuffer += chunk.toString();
           if (htmlBuffer.length > 50000) {
             // Cap it for performance
             req.destroy();
+            finish();
           }
         });
 
         res.on('end', () => {
-          this.auditHeadersAndCookies(scan.id, scan.assetId, headers, htmlBuffer, onLog);
-          resolve();
+          finish();
+        });
+
+        res.on('close', () => {
+          finish();
         });
       });
 
       req.on('error', (err) => {
+        if (responseStarted || resolved) return;
+        resolved = true;
         onLog(`[!] Connection Warning: ${err.message}. Simulating local audit logic...`);
         // Fallback: create mock findings to ensure functionality for localhost/disconnected testing
         this.simulateLocalHeaderAudit(scan.id, scan.assetId, targetUrl, onLog);
@@ -336,6 +353,8 @@ export class ScannerEngine {
       });
 
       req.on('timeout', () => {
+        if (responseStarted || resolved) return;
+        resolved = true;
         req.destroy();
         onLog(`[!] Request timed out. Running local simulated audit...`);
         this.simulateLocalHeaderAudit(scan.id, scan.assetId, targetUrl, onLog);
