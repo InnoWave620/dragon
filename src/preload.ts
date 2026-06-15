@@ -9,6 +9,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getScans: () => ipcRenderer.invoke('db:get-scans'),
     getFindings: () => ipcRenderer.invoke('db:get-findings'),
     updateFinding: (finding: any) => ipcRenderer.invoke('db:update-finding', finding),
+    deleteFinding: (id: string) => ipcRenderer.invoke('db:delete-finding', id),
+    clearFindings: () => ipcRenderer.invoke('db:clear-findings'),
   },
   
   // Scanning Engine API

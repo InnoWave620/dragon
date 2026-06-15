@@ -31,6 +31,8 @@ declare global {
         getScans: () => Promise<any[]>;
         getFindings: () => Promise<any[]>;
         updateFinding: (finding: any) => Promise<any>;
+        deleteFinding: (id: string) => Promise<boolean>;
+        clearFindings: () => Promise<void>;
       };
       scan: {
         startScan: (assetId: string, modules: string[]) => Promise<{ success: boolean; scanId: string; error?: string }>;

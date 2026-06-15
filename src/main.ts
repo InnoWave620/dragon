@@ -92,6 +92,14 @@ function setupIpcHandlers() {
     return dbService.updateFinding(finding);
   });
 
+  ipcMain.handle('db:delete-finding', (_event, id) => {
+    return dbService.deleteFinding(id);
+  });
+
+  ipcMain.handle('db:clear-findings', () => {
+    return dbService.clearFindings();
+  });
+
   // Scanning Engine Handlers
   ipcMain.handle('scan:start', (event, assetId, modules) => {
     const scanId = 'scn_' + Math.random().toString(36).substr(2, 9);
