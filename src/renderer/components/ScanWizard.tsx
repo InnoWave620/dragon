@@ -140,7 +140,7 @@ export default function ScanWizard({ assets, activeScan, onScanStarted }: ScanWi
     }
 
     setLogs([
-      "       ,      ,",
+      "        ,      ,",
       "      /(      )\\",
       "  |\\  \\\\__  __//  /|",
       "  | \\((_  \\/  _))/ |",
@@ -447,7 +447,7 @@ export default function ScanWizard({ assets, activeScan, onScanStarted }: ScanWi
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center py-6 text-gray-500 font-sans select-none">
                   <pre className="font-mono text-cyber-cyan/50 text-[10px] leading-tight mb-4 text-center">
-{`       ,      ,
+{`        ,      ,
       /(      )\\
   |\\  \\\\__  __//  /|
   | \\((_  \\/  _))/ |

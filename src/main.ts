@@ -118,7 +118,7 @@ function setupIpcHandlers() {
     
     // Print dragon design to terminal console
     const dragonLogo = [
-      "       ,      ,",
+      "        ,      ,",
       "      /(      )\\",
       "  |\\  \\\\__  __//  /|",
       "  | \\((_  \\/  _))/ |",
