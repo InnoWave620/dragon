@@ -32,6 +32,7 @@ export default function ScanWizard({ assets, activeScan, onScanStarted }: ScanWi
   const [useSast, setUseSast] = useState(false);
   const [useApi, setUseApi] = useState(false);
   const [useDocker, setUseDocker] = useState(false);
+  const [authorized, setAuthorized] = useState(false);
   
   const [logs, setLogs] = useState<string[]>([]);
   const [progress, setProgress] = useState(0);
@@ -144,8 +145,12 @@ export default function ScanWizard({ assets, activeScan, onScanStarted }: ScanWi
       "/_____/_/   \\__,_/\\__, /\\____/_/ /_/     ",
       "                 /____/                  ",
       "",
-      "[*] Dragon Security Assessment Engine Init...",
-      "[*] Target Scope Initialized."
+      "[*] Dragon Security Validation & Controlled Simulation Engine Init...",
+      "[*] Safe validation and passive auditing mode active.",
+      "[*] Verifying explicit testing authorization...",
+      "[+] Authorization confirmed by operator.",
+      "[*] Target Scope Initialized.",
+      "[~] Simulating safe validation checks (non-destructive)..."
     ]);
     setProgress(5);
     setScanStatus('running');
@@ -345,6 +350,26 @@ export default function ScanWizard({ assets, activeScan, onScanStarted }: ScanWi
             </div>
           </div>
 
+          {/* Authorization Consent Checkbox */}
+          <div className="glass-card p-6 space-y-4">
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center space-x-2">
+              <CheckCircle className="w-4 h-4 text-cyber-emerald" />
+              <span>Simulation Consent</span>
+            </h3>
+            <label className="flex items-start space-x-3 cursor-pointer group">
+              <input 
+                type="checkbox" 
+                checked={authorized}
+                onChange={(e) => setAuthorized(e.target.checked)}
+                disabled={scanStatus === 'running'}
+                className="mt-1 rounded bg-dark-surface border-dark-border text-cyber-emerald focus:ring-0 w-4 h-4 shrink-0"
+              />
+              <div className="text-[11px] leading-relaxed text-gray-400 group-hover:text-gray-300">
+                I explicitly confirm that I am authorized to audit this target asset. This validation executes non-destructive security simulation and configuration checks to safely assess weaknesses.
+              </div>
+            </label>
+          </div>
+
           {/* Action Trigger */}
           {scanStatus === 'running' ? (
             <button 
@@ -357,7 +382,7 @@ export default function ScanWizard({ assets, activeScan, onScanStarted }: ScanWi
           ) : (
             <button 
               onClick={handleStartScan}
-              disabled={!selectedAssetId}
+              disabled={!selectedAssetId || !authorized}
               className="w-full btn-cyber-cyan flex items-center justify-center space-x-2 text-sm py-3 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Play className="w-5 h-5" />
