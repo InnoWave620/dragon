@@ -116,6 +116,24 @@ function setupIpcHandlers() {
   ipcMain.handle('scan:start', (event, assetId, modules) => {
     const scanId = 'scn_' + Math.random().toString(36).substr(2, 9);
     
+    // Print dragon design to terminal console
+    const dragonLogo = [
+      "       ,      ,",
+      "      /(      )\\",
+      "  |\\  \\\\__  __//  /|",
+      "  | \\((_  \\/  _))/ |",
+      "  |  `-_\\_/\\_/-'  |",
+      "   \\  ((  oo  ))  /",
+      "    \\  \\\\_=-_//  /",
+      "     \\  `-___-' /",
+      "      `--____--'"
+    ];
+    console.log("\n==================================================");
+    dragonLogo.forEach(line => console.log(line));
+    console.log("[*] Dragon Security Validation & Controlled Simulation Engine Init...");
+    console.log("[*] Scan target: " + assetId + " | Modules: " + modules.join(', '));
+    console.log("==================================================\n");
+
     // Call scanner engine
     try {
       scannerEngine.startScan(
@@ -128,11 +146,13 @@ function setupIpcHandlers() {
           }
         },
         (logLine) => {
+          console.log(logLine);
           if (mainWindow && !mainWindow.isDestroyed()) {
             mainWindow.webContents.send('scan:log', logLine);
           }
         },
         (completedScan) => {
+          console.log(`\n[+] Scan ${scanId} completed with status: ${completedScan.status}\n`);
           if (mainWindow && !mainWindow.isDestroyed()) {
             mainWindow.webContents.send('scan:complete', completedScan);
           }
