@@ -86,6 +86,20 @@ class DatabaseService {
         this.data.assets = this.data.assets || [];
         this.data.scans = this.data.scans || [];
         this.data.findings = this.data.findings || [];
+
+        // Clean up orphaned "running" scans on startup
+        let dirty = false;
+        this.data.scans.forEach(scan => {
+          if (scan.status === 'running') {
+            scan.status = 'failed';
+            scan.progress = 100;
+            scan.logs.push('[!] Scan interrupted due to application restart.');
+            dirty = true;
+          }
+        });
+        if (dirty) {
+          this.save();
+        }
       } else {
         this.save();
       }
