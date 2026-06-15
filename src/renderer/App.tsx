@@ -19,6 +19,7 @@ import ScanWizard from './components/ScanWizard';
 import VulnerabilityExplorer from './components/VulnerabilityExplorer';
 import ReportCenter from './components/ReportCenter';
 import AIAssistant from './components/AIAssistant';
+import dragonLogo from './dragon-logo.png';
 
 // Extend window interface for Electron API exposed by preload
 declare global {
@@ -157,8 +158,8 @@ export default function App() {
         <div>
           {/* Logo Area */}
           <div className="p-6 flex items-center space-x-3 border-b border-dark-border">
-            <div className="p-2 bg-cyber-cyan/10 border border-cyber-cyan/40 rounded-lg text-cyber-cyan shadow-glow-cyan">
-              <Shield className="w-6 h-6 animate-pulse-subtle" />
+            <div className="p-1 bg-cyber-cyan/5 border border-cyber-cyan/20 rounded-lg shadow-glow-cyan/10 flex items-center justify-center">
+              <img src={dragonLogo} alt="Dragon Logo" className="w-8 h-8 object-contain" />
             </div>
             <div>
               <h1 className="font-extrabold text-lg tracking-wider text-white">DRAGON</h1>

@@ -25,6 +25,7 @@ const createWindow = () => {
     minWidth: 1024,
     minHeight: 720,
     title: 'Dragon Security Assessment Platform',
+    icon: path.join(__dirname, '../../dragon-logo.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
