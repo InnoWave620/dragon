@@ -17,6 +17,24 @@ function parseUrl(urlString: string) {
   }
 }
 
+// Helper to get relative path of files in target folder
+function getRelativePath(filePath: string, targetDir: string): string {
+  if (!filePath) return '';
+  if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
+    return filePath;
+  }
+  try {
+    const normFilePath = path.normalize(filePath);
+    const normTarget = path.normalize(targetDir);
+    if (normFilePath.toLowerCase().startsWith(normTarget.toLowerCase())) {
+      return normFilePath.substring(normTarget.length).replace(/^[\\/]/, '').replace(/\\/g, '/');
+    }
+    return path.basename(filePath);
+  } catch (e) {
+    return path.basename(filePath);
+  }
+}
+
 // Custom interface for Tech Signature
 interface TechSignature {
   name: string;
@@ -587,6 +605,8 @@ export class ScannerEngine {
       }
 
       try {
+        const relativePath = getRelativePath(filePath, targetDir);
+
         const content = fs.readFileSync(filePath, 'utf-8');
         const lines = content.split('\n');
         
@@ -612,8 +632,8 @@ export class ScannerEngine {
               impact: `Attackers obtaining this key can gain unauthorized administrative access to external accounts, databases, or cloud infrastructure, leading to data breaches or service theft.`,
               riskScore: pattern.score,
               remediation: `1. Immediately revoke the compromised secret.\n2. Add the file to your '.gitignore' to prevent committing it in the future.\n3. Implement a secrets manager (such as AWS Secrets Manager, HashiCorp Vault, or environment variables stored securely in the hosting environment).`,
-              references: ['https://owasp.org/www-community/vulnerabilities/Use_of_hard-coded_credentials'],
-              evidence: `File: ${path.basename(filePath)}:${lineNum}\nMatched Secret: ${maskedValue}`
+              references: ['https://owasp.org/www-project-secure-headers/'],
+              evidence: `File: ${relativePath}:${lineNum}\nMatched Secret: ${maskedValue}`
             });
           }
         });
@@ -647,7 +667,7 @@ export class ScannerEngine {
             riskScore: 7.8,
             remediation: `Remove hardcoded assignments. Instead, load credentials at startup from secure system environment variables or file parameters excluded from source control.`,
             references: ['https://cwe.mitre.org/data/definitions/798.html'],
-            evidence: `File: ${path.basename(filePath)}:${lineNum}\nAssignment: ${secretName} = "${maskedValue}"`
+            evidence: `File: ${relativePath}:${lineNum}\nAssignment: ${secretName} = "${maskedValue}"`
           });
         }
 
@@ -819,6 +839,7 @@ export class ScannerEngine {
       filesChecked++;
       
       try {
+        const relativePath = getRelativePath(filePath, targetDir);
         const content = fs.readFileSync(filePath, 'utf-8');
         const lines = content.split('\n');
 
@@ -881,7 +902,7 @@ export class ScannerEngine {
                   riskScore: rule.score,
                   remediation: rule.remediation,
                   references: rule.references,
-                  evidence: `File: ${filePath.replace(targetDir, '').replace(/^[\\/]/, '')}:${idx + 1}\nLine: ${line.trim()}`
+                  evidence: `File: ${relativePath}:${idx + 1}\nLine: ${line.trim()}`
                 });
               }
             });
@@ -1009,10 +1030,15 @@ export class ScannerEngine {
       return;
     }
 
+    const relativeTargetDir = fs.existsSync(targetPath) && fs.statSync(targetPath).isFile()
+      ? path.dirname(targetPath)
+      : targetPath;
+
     onLog(`[+] API Audit: Processing ${specsFound.length} spec definitions...`);
     const findings: Omit<Finding, 'id' | 'status' | 'createdAt'>[] = [];
 
     for (const spec of specsFound) {
+      const relativePath = getRelativePath(spec.filePath, relativeTargetDir) || path.basename(spec.filePath);
       try {
         let specObj: any = null;
         if (spec.isYaml) {
@@ -1022,7 +1048,7 @@ export class ScannerEngine {
         }
 
         if (!specObj || (!specObj.openapi && !specObj.swagger && !specObj.paths)) {
-          onLog(`[!] Warning: File ${path.basename(spec.filePath)} does not appear to be a valid OpenAPI schema.`);
+          onLog(`[!] Warning: File ${relativePath} does not appear to be a valid OpenAPI schema.`);
           continue;
         }
 
@@ -1050,7 +1076,7 @@ export class ScannerEngine {
               riskScore: 8.5,
               remediation: `Restructure router configurations to disable administrative and debug paths in production builds, or shield them behind IP-based VPN filters.`,
               references: ['https://owasp.org/www-project-api-security/'],
-              evidence: `Spec File: ${path.basename(spec.filePath)}\nRoute Exposed: ${routePath}`
+              evidence: `Spec File: ${relativePath}\nRoute Exposed: ${routePath}`
             });
           }
 
@@ -1070,7 +1096,7 @@ export class ScannerEngine {
                 riskScore: 8.0,
                 remediation: `Define a global or path-specific \`security\` schema (such as OAuth2, Bearer Token, or API Key) in the OpenAPI specification and enforce it in code.`,
                 references: ['https://owasp.org/API-Security/editions/2023/en/0xa2-broken-authentication/'],
-                evidence: `Spec File: ${path.basename(spec.filePath)}\nMethod: ${method.toUpperCase()} ${routePath}\nsecurity: undefined`
+                evidence: `Spec File: ${relativePath}\nMethod: ${method.toUpperCase()} ${routePath}\nsecurity: undefined`
               });
             }
 
@@ -1110,14 +1136,14 @@ export class ScannerEngine {
                   riskScore: 5.5,
                   remediation: `Add strict schemas constraints in the OpenAPI spec. Include 'pattern', 'minLength/maxLength', or 'minimum/maximum' properties.`,
                   references: ['https://owasp.org/API-Security/editions/2023/en/0xa6-unrestricted-resource-consumption/'],
-                  evidence: `Spec File: ${path.basename(spec.filePath)}\nEndpoint: ${method.toUpperCase()} ${routePath}\nParameter: ${name} (${type})\nConstraints missing`
+                  evidence: `Spec File: ${relativePath}\nEndpoint: ${method.toUpperCase()} ${routePath}\nParameter: ${name} (${type})\nConstraints missing`
                 });
               }
             });
           });
         });
       } catch (err: any) {
-        onLog(`[!] API Audit Error: Failed to parse spec file ${path.basename(spec.filePath)}: ${err.message}`);
+        onLog(`[!] API Audit Error: Failed to parse spec file ${relativePath}: ${err.message}`);
       }
     }
 
@@ -1266,7 +1292,7 @@ export class ScannerEngine {
     const findings: Omit<Finding, 'id' | 'status' | 'createdAt'>[] = [];
 
     for (const config of configsFound) {
-      const filename = path.basename(config.filePath);
+      const relativePath = getRelativePath(config.filePath, targetDir);
       const lines = config.content.split('\n');
 
       if (config.type === 'dockerfile') {
@@ -1277,12 +1303,12 @@ export class ScannerEngine {
             assetId: scan.assetId,
             title: 'Docker Container Executing as Root Privilege',
             severity: 'high',
-            description: `The Dockerfile \`${filename}\` does not define a \`USER\` directive. This causes containerized processes to execute as root user by default.`,
+            description: `The Dockerfile \`${relativePath}\` does not define a \`USER\` directive. This causes containerized processes to execute as root user by default.`,
             impact: 'In the event of a container compromise, attackers get root permissions, which increases the likelihood of a container breakout to the host.',
             riskScore: 8.2,
             remediation: 'Create a non-privileged user in your Dockerfile and switch to it before launching the application. Example:\nRUN groupadd -r app && useradd -r -g app developer\nUSER developer',
             references: ['https://docs.docker.com/develop/develop-images/dockerfile_best-practices/', 'https://cwe.mitre.org/data/definitions/250.html'],
-            evidence: `File: ${filename}\nUSER instruction is missing`
+            evidence: `File: ${relativePath}\nUSER instruction is missing`
           });
         }
 
@@ -1294,12 +1320,12 @@ export class ScannerEngine {
               assetId: scan.assetId,
               title: 'Insecure Base Image Pinned to Latest Tag',
               severity: 'medium',
-              description: `The base image in \`${filename}\` is pinned to the mutable \`:latest\` tag.`,
+              description: `The base image in \`${relativePath}\` is pinned to the mutable \`:latest\` tag.`,
               impact: 'Builds are non-deterministic. Background base image updates can introduce breaking changes or untracked vulnerabilities silently.',
               riskScore: 5.0,
               remediation: 'Pin the image version tag to a specific version or a SHA-256 digest hash (e.g. `FROM node:20-alpine`).',
               references: ['https://docs.docker.com/engine/reference/builder/#from'],
-              evidence: `File: ${filename}\nInstruction: ${line.trim()}`
+              evidence: `File: ${relativePath}\nInstruction: ${line.trim()}`
             });
           }
         });
@@ -1321,12 +1347,12 @@ export class ScannerEngine {
                       assetId: scan.assetId,
                       title: `Exposed Administrative DB/Cache Port: ${port}`,
                       severity: 'high',
-                      description: `The port \`${port}\` is exposed directly to external networks in \`${filename}\`.`,
+                      description: `The port \`${port}\` is exposed directly to external networks in \`${relativePath}\`.`,
                       impact: 'Exposing administrative database or cache endpoints to public networks facilitates brute-force attacks and exploit attempts.',
                       riskScore: 8.0,
                       remediation: 'Expose the port only locally using loopback interfaces (e.g. `127.0.0.1:3306:3306`) or rely on Docker network aliases for secure internal service discovery.',
                       references: ['https://docs.docker.com/compose/compose-file/compose-file-v3/#ports'],
-                      evidence: `File: ${filename}:${nextIdx + 1}\nMapping: ${portLine}`
+                      evidence: `File: ${relativePath}:${nextIdx + 1}\nMapping: ${portLine}`
                     });
                   }
                 }
@@ -1353,12 +1379,12 @@ export class ScannerEngine {
                   assetId: scan.assetId,
                   title: 'Hardcoded Credential in Environment Variables',
                   severity: 'high',
-                  description: `A plain-text secret or key was detected in the environment block of \`${filename}\`.`,
+                  description: `A plain-text secret or key was detected in the environment block of \`${relativePath}\`.`,
                   impact: 'Committed credentials in compose files can be read by anyone with repository access, leading to credential leaks.',
                   riskScore: 8.5,
                   remediation: 'Use Docker Secrets, compose environment file references (`env_file`), or environment variables defined in the host OS (e.g., `PASSWORD: ${DB_PASSWORD}`).',
                   references: ['https://docs.docker.com/compose/environment-variables/'],
-                  evidence: `File: ${filename}:${idx + 1}\nEnvironment assignment: ${parts[0].trim()}=${maskedValue}`
+                  evidence: `File: ${relativePath}:${idx + 1}\nEnvironment assignment: ${parts[0].trim()}=${maskedValue}`
                 });
               }
             }
