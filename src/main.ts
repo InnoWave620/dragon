@@ -170,6 +170,29 @@ function setupIpcHandlers() {
     return false;
   });
 
+  ipcMain.handle('dialog:alert', async (_event, message, type = 'info') => {
+    if (!mainWindow) return;
+    await dialog.showMessageBox(mainWindow, {
+      type: type as any,
+      message,
+      buttons: ['OK'],
+      title: 'Dragon Platform'
+    });
+  });
+
+  ipcMain.handle('dialog:confirm', async (_event, message, type = 'question') => {
+    if (!mainWindow) return false;
+    const result = await dialog.showMessageBox(mainWindow, {
+      type: type as any,
+      message,
+      buttons: ['Yes', 'No'],
+      defaultId: 1,
+      cancelId: 1,
+      title: 'Dragon Platform'
+    });
+    return result.response === 0;
+  });
+
   // AI Assistant Chat Handler
   ipcMain.handle('ai:chat', (_event, message, contextFinding) => {
     return aiService.processChat(message, contextFinding);

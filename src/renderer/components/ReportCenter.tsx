@@ -125,12 +125,12 @@ export default function ReportCenter({ scans }: ReportCenterProps) {
 
       const success = await window.electronAPI.reports.exportReport(scan.id, format, savePath);
       if (success) {
-        alert(`Successfully exported report to: ${savePath}`);
+        await window.electronAPI.dialog.alert(`Successfully exported report to: ${savePath}`, 'info');
       } else {
-        alert('Failed to export report.');
+        await window.electronAPI.dialog.alert('Failed to export report.', 'error');
       }
     } catch (e: any) {
-      alert(`Export error: ${e.message}`);
+      await window.electronAPI.dialog.alert(`Export error: ${e.message}`, 'error');
     }
   };
 

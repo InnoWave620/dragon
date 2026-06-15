@@ -132,7 +132,7 @@ export default function ScanWizard({ assets, activeScan, onScanStarted }: ScanWi
     if (useDocker) modules.push('docker_security');
 
     if (modules.length === 0) {
-      alert('Please select at least one scan module to execute.');
+      await window.electronAPI.dialog.alert('Please select at least one scan module to execute.', 'warning');
       return;
     }
 

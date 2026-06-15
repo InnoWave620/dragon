@@ -42,6 +42,10 @@ declare global {
         onProgress: (callback: (scan: any) => void) => () => void;
         onComplete: (callback: (scan: any) => void) => () => void;
       };
+      dialog: {
+        alert: (message: string, type?: string) => Promise<void>;
+        confirm: (message: string, type?: string) => Promise<boolean>;
+      };
       reports: {
         exportReport: (scanId: string, format: string, filePath: string, reportType?: 'audit' | 'compliance') => Promise<boolean>;
         selectSavePath: (title: string, defaultName: string, filters: any[]) => Promise<string | null>;

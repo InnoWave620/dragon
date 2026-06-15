@@ -35,6 +35,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     }
   },
 
+  // Native Dialog API
+  dialog: {
+    alert: (message: string, type?: string) => ipcRenderer.invoke('dialog:alert', message, type),
+    confirm: (message: string, type?: string) => ipcRenderer.invoke('dialog:confirm', message, type),
+  },
+  
   // Reporting API
   reports: {
     exportReport: (scanId: string, format: 'pdf' | 'html' | 'json' | 'csv', defaultPath: string, reportType?: 'audit' | 'compliance') => 

@@ -69,7 +69,10 @@ export default function AssetManager({ assets, onRefresh }: AssetManagerProps) {
   };
 
   const handleDeleteAsset = async (id: string) => {
-    if (confirm('Are you sure you want to delete this asset? This will remove all associated scan findings.')) {
+    const isConfirmed = await window.electronAPI.dialog.confirm(
+      'Are you sure you want to delete this asset? This will remove all associated scan findings.'
+    );
+    if (isConfirmed) {
       try {
         await window.electronAPI.db.deleteAsset(id);
         onRefresh();
