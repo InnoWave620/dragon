@@ -994,10 +994,16 @@ export class ScannerEngine {
       onLog(`[~] API Audit: Target is a URL. Attempting spec discovery at ${parsedUrl.origin}/openapi.json...`);
       await new Promise<void>((resolve) => {
         const client = parsedUrl.protocol === 'https:' ? https : http;
+        let responseStarted = false;
+        let resolved = false;
+
         const req = client.get(`${parsedUrl.origin}/openapi.json`, { timeout: 3000 }, (res) => {
+          responseStarted = true;
           let buffer = '';
-          res.on('data', chunk => buffer += chunk.toString());
-          res.on('end', () => {
+
+          const finish = () => {
+            if (resolved) return;
+            resolved = true;
             if (res.statusCode === 200 && (buffer.includes('"openapi"') || buffer.includes('"swagger"'))) {
               onLog(`[+] API Audit: Successfully discovered remote OpenAPI spec.`);
               specsFound.push({
@@ -1007,10 +1013,37 @@ export class ScannerEngine {
               });
             }
             resolve();
+          };
+
+          res.on('data', chunk => {
+            buffer += chunk.toString();
+            if (buffer.length > 50000) {
+              req.destroy();
+              finish();
+            }
+          });
+
+          res.on('end', () => {
+            finish();
+          });
+
+          res.on('close', () => {
+            finish();
           });
         });
-        req.on('error', () => resolve());
-        req.on('timeout', () => { req.destroy(); resolve(); });
+
+        req.on('error', () => {
+          if (responseStarted || resolved) return;
+          resolved = true;
+          resolve();
+        });
+
+        req.on('timeout', () => {
+          if (responseStarted || resolved) return;
+          resolved = true;
+          req.destroy();
+          resolve();
+        });
       });
     }
 
