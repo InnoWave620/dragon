@@ -168,6 +168,23 @@ class DatabaseService {
     return this.data.scans.find(s => s.id === id);
   }
 
+  deleteScan(id: string): boolean {
+    const initialLength = this.data.scans.length;
+    this.data.scans = this.data.scans.filter(s => s.id !== id);
+    if (this.data.scans.length !== initialLength) {
+      this.deleteFindingsForScan(id);
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
+  clearScans() {
+    this.data.scans = [];
+    this.data.findings = [];
+    this.save();
+  }
+
   // --- Finding Management ---
   getFindings(): Finding[] {
     this.init();

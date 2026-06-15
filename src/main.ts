@@ -84,6 +84,14 @@ function setupIpcHandlers() {
     return dbService.getScans();
   });
 
+  ipcMain.handle('db:delete-scan', (_event, id) => {
+    return dbService.deleteScan(id);
+  });
+
+  ipcMain.handle('db:clear-scans', () => {
+    return dbService.clearScans();
+  });
+
   ipcMain.handle('db:get-findings', () => {
     return dbService.getFindings();
   });

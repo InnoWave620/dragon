@@ -7,7 +7,8 @@ import {
   FileCode,
   ShieldCheck, 
   Download,
-  AlertCircle
+  AlertCircle,
+  Trash2
 } from 'lucide-react';
 
 interface Scan {
@@ -40,16 +41,57 @@ interface Scan {
 
 interface ReportCenterProps {
   scans: Scan[];
+  onRefresh?: () => void;
 }
 
 type FormatType = 'pdf' | 'html' | 'json' | 'csv';
 
-export default function ReportCenter({ scans }: ReportCenterProps) {
+export default function ReportCenter({ scans, onRefresh }: ReportCenterProps) {
   const [selectedScanId, setSelectedScanId] = useState('');
   const [exportFormat, setExportFormat] = useState<FormatType>('pdf');
   const [reportType, setReportType] = useState<'audit' | 'compliance'>('audit');
   const [isExporting, setIsExporting] = useState(false);
   const [exportMessage, setExportMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+  const handleDeleteScan = async (scanId: string) => {
+    const confirmed = await window.electronAPI.dialog.confirm(
+      "Are you sure you want to delete this scan run and all its associated findings?",
+      "warning"
+    );
+    if (confirmed) {
+      try {
+        const success = await window.electronAPI.db.deleteScan(scanId);
+        if (success) {
+          if (onRefresh) onRefresh();
+          if (selectedScanId === scanId) {
+            setSelectedScanId('');
+          }
+          await window.electronAPI.dialog.alert("Scan run deleted successfully.", "info");
+        } else {
+          await window.electronAPI.dialog.alert("Failed to delete scan run.", "error");
+        }
+      } catch (e: any) {
+        await window.electronAPI.dialog.alert(`Error: ${e.message}`, "error");
+      }
+    }
+  };
+
+  const handleClearAllHistory = async () => {
+    const confirmed = await window.electronAPI.dialog.confirm(
+      "Are you sure you want to permanently delete all historical assessment runs and findings? This cannot be undone.",
+      "warning"
+    );
+    if (confirmed) {
+      try {
+        await window.electronAPI.db.clearScans();
+        if (onRefresh) onRefresh();
+        setSelectedScanId('');
+        await window.electronAPI.dialog.alert("Scan history cleared successfully.", "info");
+      } catch (e: any) {
+        await window.electronAPI.dialog.alert(`Failed to clear scan history: ${e.message}`, "error");
+      }
+    }
+  };
 
   const completedScans = scans.filter(s => s.status === 'completed');
 
@@ -256,7 +298,18 @@ export default function ReportCenter({ scans }: ReportCenterProps) {
 
         {/* SCAN ASSESSMENT LOG TABLE (2/3 Width) */}
         <div className="lg:col-span-2 glass-card p-6 space-y-4">
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider">Historical Assessment Runs</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider">Historical Assessment Runs</h3>
+            {completedScans.length > 0 && (
+              <button
+                onClick={handleClearAllHistory}
+                className="px-3 py-1.5 border border-cyber-rose/30 hover:border-cyber-rose bg-cyber-rose/5 hover:bg-cyber-rose/10 text-cyber-rose hover:text-white rounded transition-colors text-[10px] font-bold uppercase flex items-center space-x-1.5"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Clear History</span>
+              </button>
+            )}
+          </div>
           
           {completedScans.length > 0 ? (
             <div className="overflow-x-auto">
@@ -267,7 +320,7 @@ export default function ReportCenter({ scans }: ReportCenterProps) {
                     <th className="p-3">Completed On</th>
                     <th className="p-3">Severity Findings</th>
                     <th className="p-3 text-center">Compliance</th>
-                    <th className="p-3 text-center">Quick Export</th>
+                    <th className="p-3 text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-dark-border/40">
@@ -320,6 +373,13 @@ export default function ReportCenter({ scans }: ReportCenterProps) {
                             className="px-2 py-1 bg-dark-bg border border-dark-border hover:border-cyber-cyan text-gray-400 hover:text-white rounded transition-colors text-[9px] font-bold uppercase"
                           >
                             CSV
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteScan(scan.id)}
+                            className="px-1.5 py-1 bg-dark-bg border border-cyber-rose/30 hover:border-cyber-rose text-cyber-rose/70 hover:text-cyber-rose rounded transition-colors text-[9px] font-bold uppercase flex items-center justify-center"
+                            title="Delete Run"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </td>

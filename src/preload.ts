@@ -7,6 +7,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     addAsset: (asset: any) => ipcRenderer.invoke('db:add-asset', asset),
     deleteAsset: (id: string) => ipcRenderer.invoke('db:delete-asset', id),
     getScans: () => ipcRenderer.invoke('db:get-scans'),
+    deleteScan: (id: string) => ipcRenderer.invoke('db:delete-scan', id),
+    clearScans: () => ipcRenderer.invoke('db:clear-scans'),
     getFindings: () => ipcRenderer.invoke('db:get-findings'),
     updateFinding: (finding: any) => ipcRenderer.invoke('db:update-finding', finding),
     deleteFinding: (id: string) => ipcRenderer.invoke('db:delete-finding', id),

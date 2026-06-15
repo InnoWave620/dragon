@@ -29,6 +29,8 @@ declare global {
         addAsset: (asset: any) => Promise<any>;
         deleteAsset: (id: string) => Promise<boolean>;
         getScans: () => Promise<any[]>;
+        deleteScan: (id: string) => Promise<boolean>;
+        clearScans: () => Promise<void>;
         getFindings: () => Promise<any[]>;
         updateFinding: (finding: any) => Promise<any>;
         deleteFinding: (id: string) => Promise<boolean>;
@@ -288,6 +290,7 @@ export default function App() {
           {activeTab === 'reports' && (
             <ReportCenter 
               scans={scans} 
+              onRefresh={refreshData}
             />
           )}
           {activeTab === 'ai' && (
