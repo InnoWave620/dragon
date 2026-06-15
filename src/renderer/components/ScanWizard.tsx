@@ -138,12 +138,15 @@ export default function ScanWizard({ assets, activeScan, onScanStarted }: ScanWi
     }
 
     setLogs([
-      "    ____                                 ",
-      "   / __ \\_________ _____ _____  ____     ",
-      "  / / / / ___/ __ `/ __ `/ __ \\/ __ \\    ",
-      " / /_/ / /  / /_/ / /_/ / /_/ / / / /    ",
-      "/_____/_/   \\__,_/\\__, /\\____/_/ /_/     ",
-      "                 /____/                  ",
+      "       ,      ,",
+      "      /(      )\\",
+      "  |\\  \\\\__  __//  /|",
+      "  | \\((_  \\/  _))/ |",
+      "  |  `-_\\_/\\_/-'  |",
+      "   \\  ((  oo  ))  /",
+      "    \\  \\\\_=-_//  /",
+      "     \\  `-___-' /",
+      "      `--____--'",
       "",
       "[*] Dragon Security Validation & Controlled Simulation Engine Init...",
       "[*] Safe validation and passive auditing mode active.",
