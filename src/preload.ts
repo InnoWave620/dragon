@@ -14,6 +14,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     deleteFinding: (id: string) => ipcRenderer.invoke('db:delete-finding', id),
     deleteFindings: (ids: string[]) => ipcRenderer.invoke('db:delete-findings', ids),
     clearFindings: () => ipcRenderer.invoke('db:clear-findings'),
+    getDevelopers: () => ipcRenderer.invoke('db:get-developers'),
+    addDeveloper: (dev: any) => ipcRenderer.invoke('db:add-developer', dev),
+    deleteDeveloper: (id: string) => ipcRenderer.invoke('db:delete-developer', id),
   },
   
   // Scanning Engine API
@@ -54,5 +57,22 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // AI Assistant API
   ai: {
     chat: (message: string, contextFinding?: any) => ipcRenderer.invoke('ai:chat', message, contextFinding)
+  },
+
+  // Sync Settings API
+  settings: {
+    getSyncSettings: () => ipcRenderer.invoke('settings:get-sync'),
+    saveSyncSettings: (settings: any) => ipcRenderer.invoke('settings:save-sync', settings),
+  },
+
+  // Sync API
+  sync: {
+    getStatus: () => ipcRenderer.invoke('sync:status'),
+    syncNow: () => ipcRenderer.invoke('sync:now'),
+    onStatusChanged: (callback: (status: any) => void) => {
+      const subscription = (_event: any, value: any) => callback(value);
+      ipcRenderer.on('sync:status-changed', subscription);
+      return () => ipcRenderer.removeListener('sync:status-changed', subscription);
+    }
   }
 });

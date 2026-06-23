@@ -9,7 +9,9 @@ import {
   MessageSquareCode, 
   Moon, 
   Sun,
-  Activity
+  Activity,
+  Users,
+  Settings as SettingsIcon
 } from 'lucide-react';
 
 // Import views
@@ -19,6 +21,8 @@ import ScanWizard from './components/ScanWizard';
 import VulnerabilityExplorer from './components/VulnerabilityExplorer';
 import ReportCenter from './components/ReportCenter';
 import AIAssistant from './components/AIAssistant';
+import TeamSettings from './components/TeamSettings';
+import Settings from './components/Settings';
 import dragonLogo from './dragon-logo.png';
 
 // Extend window interface for Electron API exposed by preload
@@ -37,6 +41,9 @@ declare global {
         deleteFinding: (id: string) => Promise<boolean>;
         deleteFindings: (ids: string[]) => Promise<boolean>;
         clearFindings: () => Promise<void>;
+        getDevelopers: () => Promise<any[]>;
+        addDeveloper: (dev: any) => Promise<any>;
+        deleteDeveloper: (id: string) => Promise<boolean>;
       };
       scan: {
         startScan: (assetId: string, modules: string[]) => Promise<{ success: boolean; scanId: string; error?: string }>;
@@ -56,11 +63,20 @@ declare global {
       ai: {
         chat: (message: string, contextFinding?: any) => Promise<{ answer: string; codeSnippet?: string; language?: string }>;
       };
+      settings: {
+        getSyncSettings: () => Promise<any>;
+        saveSyncSettings: (settings: any) => Promise<any>;
+      };
+      sync: {
+        getStatus: () => Promise<any>;
+        syncNow: () => Promise<any>;
+        onStatusChanged: (callback: (status: any) => void) => () => void;
+      };
     };
   }
 }
 
-type TabType = 'dashboard' | 'assets' | 'scan' | 'findings' | 'reports' | 'ai';
+type TabType = 'dashboard' | 'assets' | 'scan' | 'findings' | 'reports' | 'ai' | 'team' | 'settings';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
@@ -68,6 +84,8 @@ export default function App() {
   const [assets, setAssets] = useState<any[]>([]);
   const [scans, setScans] = useState<any[]>([]);
   const [findings, setFindings] = useState<any[]>([]);
+  const [developers, setDevelopers] = useState<any[]>([]);
+  const [syncStatus, setSyncStatus] = useState<any>({ isSyncing: false, lastSyncedAt: '' });
   const [activeScan, setActiveScan] = useState<any>(null);
 
   // Fetch initial data from SQLite/JSON db service via Electron IPC
@@ -76,10 +94,12 @@ export default function App() {
       const dbAssets = await window.electronAPI.db.getAssets();
       const dbScans = await window.electronAPI.db.getScans();
       const dbFindings = await window.electronAPI.db.getFindings();
+      const dbDevelopers = await window.electronAPI.db.getDevelopers();
       
       setAssets(dbAssets);
       setScans(dbScans);
       setFindings(dbFindings);
+      setDevelopers(dbDevelopers);
 
       // Check if any scan is running currently
       const running = dbScans.find(s => s.status === 'running');
@@ -97,7 +117,21 @@ export default function App() {
     refreshData();
     // Refresh database variables every 5 seconds
     const interval = setInterval(refreshData, 5000);
-    return () => clearInterval(interval);
+
+    // Load initial sync status
+    window.electronAPI.sync.getStatus().then((status: any) => {
+      setSyncStatus(status);
+    }).catch((e: any) => console.error(e));
+
+    // Listen to sync status changes
+    const unsubscribeSync = window.electronAPI.sync.onStatusChanged((status: any) => {
+      setSyncStatus(status);
+    });
+
+    return () => {
+      clearInterval(interval);
+      unsubscribeSync();
+    };
   }, []);
 
   // Listen to active scan updates in background
@@ -148,6 +182,8 @@ export default function App() {
     { id: 'findings', label: 'Vulnerability Explorer', icon: AlertTriangle, count: openFindings.length },
     { id: 'reports', label: 'Report Center', icon: FileDown },
     { id: 'ai', label: 'AI Remediation', icon: MessageSquareCode },
+    { id: 'team', label: 'Team Settings', icon: Users },
+    { id: 'settings', label: 'Cloud Sync Settings', icon: SettingsIcon },
   ];
 
   return (
@@ -199,6 +235,44 @@ export default function App() {
               );
             })}
           </nav>
+        </div>
+
+        {/* Connection / Sync Status Indicator */}
+        <div className="px-4 py-3 border-t border-dark-border flex flex-col space-y-1.5 text-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-gray-500 font-medium">Cloud Database Sync</span>
+            <div className="flex items-center space-x-1.5">
+              <span className={`w-2 h-2 rounded-full ${
+                syncStatus.isSyncing 
+                  ? 'bg-cyber-cyan animate-pulse' 
+                  : syncStatus.lastError 
+                    ? 'bg-cyber-rose' 
+                    : syncStatus.lastSyncedAt 
+                      ? 'bg-cyber-emerald' 
+                      : 'bg-gray-600'
+              }`} />
+              <span className="font-semibold text-gray-400">
+                {syncStatus.isSyncing 
+                  ? 'Syncing...' 
+                  : syncStatus.lastError 
+                    ? 'Sync Error' 
+                    : syncStatus.lastSyncedAt 
+                      ? 'Connected' 
+                      : 'Offline'}
+              </span>
+            </div>
+          </div>
+          {syncStatus.lastSyncedAt && (
+            <div className="text-[10px] text-gray-500 flex justify-between">
+              <span>Last Synced:</span>
+              <span className="font-mono">{new Date(syncStatus.lastSyncedAt).toLocaleTimeString()}</span>
+            </div>
+          )}
+          {syncStatus.lastError && (
+            <div className="text-[9px] text-cyber-rose max-w-full truncate" title={syncStatus.lastError}>
+              {syncStatus.lastError}
+            </div>
+          )}
         </div>
 
         {/* Sidebar Footer */}
@@ -297,6 +371,16 @@ export default function App() {
           {activeTab === 'ai' && (
             <AIAssistant 
               findings={findings}
+            />
+          )}
+          {activeTab === 'team' && (
+            <TeamSettings 
+              onRefresh={refreshData}
+            />
+          )}
+          {activeTab === 'settings' && (
+            <Settings 
+              onRefresh={refreshData}
             />
           )}
         </main>

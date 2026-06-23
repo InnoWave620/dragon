@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import { dbService } from './main/db';
+import { syncManager } from './main/sync';
 import { scannerEngine } from './main/scanner';
 import { reportService } from './main/reporter';
 import { aiService } from './main/ai';
@@ -226,5 +227,36 @@ function setupIpcHandlers() {
   // AI Assistant Chat Handler
   ipcMain.handle('ai:chat', (_event, message, contextFinding) => {
     return aiService.processChat(message, contextFinding);
+  });
+
+  // Developer Management Handlers
+  ipcMain.handle('db:get-developers', () => {
+    return dbService.getDevelopers();
+  });
+
+  ipcMain.handle('db:add-developer', (_event, dev) => {
+    return dbService.addDeveloper(dev);
+  });
+
+  ipcMain.handle('db:delete-developer', (_event, id) => {
+    return dbService.deleteDeveloper(id);
+  });
+
+  // Sync Settings Handlers
+  ipcMain.handle('settings:get-sync', () => {
+    return dbService.getSyncSettings();
+  });
+
+  ipcMain.handle('settings:save-sync', (_event, settings) => {
+    return dbService.saveSyncSettings(settings);
+  });
+
+  // Sync Action & Status Handlers
+  ipcMain.handle('sync:status', () => {
+    return syncManager.getSyncStatus();
+  });
+
+  ipcMain.handle('sync:now', async () => {
+    return await syncManager.sync();
   });
 }
